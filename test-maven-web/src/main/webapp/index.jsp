@@ -12,6 +12,9 @@
 
 <p><a href="yummy/orders">Yummy Orders service</a></p>
 
+<p>&nbsp;</p>
+
+<p><a href="memcached">Memcached service</a></p>
 
 </body>
 </html>
