@@ -6,6 +6,7 @@ import java.util.concurrent.TimeoutException;
 import net.rubyeye.xmemcached.MemcachedClient;
 import net.rubyeye.xmemcached.MemcachedClientBuilder;
 import net.rubyeye.xmemcached.XMemcachedClientBuilder;
+import net.rubyeye.xmemcached.command.BinaryCommandFactory;
 import net.rubyeye.xmemcached.exception.MemcachedException;
 import net.rubyeye.xmemcached.utils.AddrUtil;
 
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class MemcachedController {
 
-	final String MEMCACHED_SERVER = "test-maven-web-cache.t2k1d5.0001.use1.cache.amazonaws.com:11211";
+	final String MEMCACHED_SERVER = "test-maven-web-cache.t2k1d5.cfg.use1.cache.amazonaws.com:11211";
 	
 	@RequestMapping(value="/memcached")
 	@ResponseBody 
@@ -29,43 +30,46 @@ public class MemcachedController {
 		Object result = null;
 		
 		MemcachedClientBuilder builder = new XMemcachedClientBuilder(AddrUtil.getAddresses(MEMCACHED_SERVER));
+		builder.setCommandFactory(new BinaryCommandFactory());
+		
 		try {
 			MemcachedClient client = builder.build();
 			
-			if (cmd == "set") {
+			if (cmd.equalsIgnoreCase("set")) {
 				result = client.set(name, 0, value);
 			}
-			else if (cmd == "add") {
+			else if (cmd.equalsIgnoreCase("add")) {
 				result = client.add(name, 0, value);
 			}
-			else if (cmd == "replace") {
+			else if (cmd.equalsIgnoreCase("replace")) {
 				result = client.replace(name, 0, value);
 			}
-			else if (cmd == "delete") {
+			else if (cmd.equalsIgnoreCase("delete")) {
 				result = client.delete(name);
 			}
-			else if (cmd == "get") {
+			else if (cmd.equalsIgnoreCase("get")) {
 				result = client.get(name);
 			}
+			else {
+				result = "Cmd not found";
+			}
+			
+			client.shutdown();
 		}
 		catch (TimeoutException e) {
-			e.printStackTrace();
 			result = e;
 		}
 		catch (InterruptedException e) {
-			e.printStackTrace();
 			result = e;
 		}
 		catch (MemcachedException e) {
-			e.printStackTrace();
 			result = e;
 		}
 		catch (IOException e) {
-			e.printStackTrace();
 			result = e;
 		}
 		
-		return new String[] { cmd, name, value, result != null ? result.toString() : null };
+		return new String[] { MEMCACHED_SERVER, cmd, name, value, (result != null ? result.toString() : null) };
 	}
 
 }
