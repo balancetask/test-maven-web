@@ -19,22 +19,26 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class MemcachedController {
 
 	final String MEMCACHED_SERVER = "test-maven-web-cache.t2k1d5.cfg.use1.cache.amazonaws.com:11211";
-	
-	@RequestMapping(value="/memcached")
-	@ResponseBody 
+
+	MemcachedClient createXClient() throws IOException {
+		MemcachedClientBuilder builder = new XMemcachedClientBuilder(
+				AddrUtil.getAddresses(MEMCACHED_SERVER));
+		builder.setCommandFactory(new BinaryCommandFactory());
+		return builder.build();
+	}
+
+	@RequestMapping(value = "/memcached/hello")
+	@ResponseBody
 	public String[] getHello(
 			@RequestParam(value = "cmd", required = false, defaultValue = "set") String cmd,
 			@RequestParam(value = "name", required = false, defaultValue = "a") String name,
 			@RequestParam(value = "value", required = false, defaultValue = "foo") String value) {
-		
+
 		Object result = null;
-		
-		MemcachedClientBuilder builder = new XMemcachedClientBuilder(AddrUtil.getAddresses(MEMCACHED_SERVER));
-		builder.setCommandFactory(new BinaryCommandFactory());
-		
+
 		try {
-			MemcachedClient client = builder.build();
-			
+			MemcachedClient client = createXClient();
+
 			if (cmd.equalsIgnoreCase("set")) {
 				result = client.set(name, 0, value);
 			}
@@ -53,7 +57,7 @@ public class MemcachedController {
 			else {
 				result = "Cmd not found";
 			}
-			
+
 			client.shutdown();
 		}
 		catch (TimeoutException e) {
@@ -68,8 +72,25 @@ public class MemcachedController {
 		catch (IOException e) {
 			result = e;
 		}
-		
-		return new String[] { MEMCACHED_SERVER, cmd, name, value, (result != null ? result.toString() : null) };
+
+		return new String[] { MEMCACHED_SERVER, cmd, name, value,
+				(result != null ? result.toString() : null) };
 	}
 
+	@RequestMapping(value = "/memcached/test")
+	@ResponseBody
+	public String getTest(
+			@RequestParam(value = "mode", required = false, defaultValue = "xmemcached") String mode) {
+		try {
+			MemcachedClient client = "xmemcached".equals(mode) ? createXClient() : null;
+
+			MemcachedValidator validator = new MemcachedValidator(client);
+			validator.testAll();
+
+			return "Success";
+		}
+		catch (Exception e) {
+			return e.toString();
+		}
+	}
 }

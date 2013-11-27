@@ -14,7 +14,8 @@
 
 <p>&nbsp;</p>
 
-<p><a href="memcached">Memcached service</a></p>
+<p><a href="memcached/hello">Memcached service</a></p>
+<p><a href="memcached/test">Memcached test</a></p>
 
 </body>
 </html>
